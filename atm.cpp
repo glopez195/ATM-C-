@@ -15,17 +15,34 @@ const short int GET_CARD_BACK = 5;
 
 // Struct wasn't neccessary since all the info is balance but I wanted to use pointer ( -> ) :)
 struct bankAccount {
+    string accountNumber;
+    string name;
     double balance;
+    bankAccount *next;
+    bankAccount *previous; 
 };
 
-// ---- [ Menu Options ] -----
+bool runClientMode();
+bool runBankerMode();
+
+// ---- [ Menu Options for Customer ] -----
 void fastCash(bankAccount*);
 void withdraw(bankAccount*);
 void deposit(bankAccount*);
 void checkBalance(const bankAccount*);
 
+// ---- [ Menu Options for Banker ] -----
+void addBankAcount(bankAccount*);
+void displayListOfCs(const bankAccount*, int);
+void searchCs(const string);
+void sortCsListBy(const string);
+void deleteAccount(string);
+
 ///  ---- [ HERLPER FUNCTIONS ] ----
 void displayMenu();
+bankAccount* getLastAccount(bankAccount *);
+// Get bank account
+bankAccount* getBankAccount(string);
 // Initialize the balance of the bank account to random (1 - 1001)
 void initializeAccountBalance(bankAccount*);
 // Check if pin is valid
@@ -43,59 +60,7 @@ double getValidAmount();
 
 int main()
 {    
-    bankAccount myBankAccount;
-    bankAccount *p_myBankAccount = &myBankAccount;
-    bool isReceiptWanted;
-    bool *p_isReceiptWanted = &isReceiptWanted;
-    bool isInteracting = true;
-    int entry;
-    system("clear");
-    
-    // cout config
-    cout << setprecision(2) << fixed;
-
-    // Initialize the bank account balance
-    initializeAccountBalance(p_myBankAccount);
-
-    // If pin is entered incorrectly 3 times end program
-    if(!checkPin()) return 1;
-
-    // Check if customer wants receipt
-    checkIfReceiptWanted(p_isReceiptWanted);
-
-    // Interaction Loop
-    while(isInteracting)
-    {
-        displayMenu();
-        entry = checkEntry(1, 5);
-        system("clear");
-
-        switch(entry) {
-            case FAST_CASH:
-                fastCash(p_myBankAccount);
-                break;
-            case WITHDRAW:
-                withdraw(p_myBankAccount);
-                break;
-            case DEPOSIT:
-                deposit(p_myBankAccount);
-                break;
-            case CHECK_BALANCE:
-                checkBalance(p_myBankAccount);
-                break;
-            case GET_CARD_BACK:
-                isInteracting = false;
-                continue;             
-        }
-
-        cout << "1 --> Another Transaction\t\tGet Card Back <-- 2\n";
-        entry = checkEntry(1, 2);
-        if(entry == 1){
-            system("clear");
-        } else isInteracting = false;
-    }
-    if (isReceiptWanted) cout << "Take your receipt...\n\n";
-    cout << "THANK FOR USING OUR VIRTUAL BANK SYSTEM\nGOODBYE. . . \n";
+    runClientMode();
     return 0;
 }
 
@@ -271,4 +236,103 @@ double getValidAmount()
     return validAmount;
 }
 
+bool runClientMode()
+{
+    bankAccount myBankAccount;
+    bankAccount *p_myBankAccount = &myBankAccount;
+    bool isReceiptWanted;
+    bool *p_isReceiptWanted = &isReceiptWanted;
+    bool isInteracting = true;
+    int entry;
+    system("clear");
+    
+    // cout config
+    cout << setprecision(2) << fixed;
+
+    // Initialize the bank account balance
+    initializeAccountBalance(p_myBankAccount);
+
+    // If pin is entered incorrectly 3 times end program
+    if(!checkPin()) return false;
+
+    // Check if customer wants receipt
+    checkIfReceiptWanted(p_isReceiptWanted);
+
+    // Interaction Loop
+    while(isInteracting)
+    {
+        displayMenu();
+        entry = checkEntry(1, 5);
+        system("clear");
+
+        switch(entry) {
+            case FAST_CASH:
+                fastCash(p_myBankAccount);
+                break;
+            case WITHDRAW:
+                withdraw(p_myBankAccount);
+                break;
+            case DEPOSIT:
+                deposit(p_myBankAccount);
+                break;
+            case CHECK_BALANCE:
+                checkBalance(p_myBankAccount);
+                break;
+            case GET_CARD_BACK:
+                isInteracting = false;
+                continue;             
+        }
+
+        cout << "1 --> Another Transaction\t\tGet Card Back <-- 2\n";
+        entry = checkEntry(1, 2);
+        if(entry == 1){
+            system("clear");
+        } else isInteracting = false;
+    }
+    if (isReceiptWanted) cout << "Take your receipt...\n\n";
+    cout << "THANK FOR USING OUR VIRTUAL BANK SYSTEM\nGOODBYE. . . \n";
+    return true;
+}
+
+bool runBankerMode()
+{
+    bankAccount bankAccounts;
+    bankAccount* _headList = &bankAccounts;
+    _headList -> accountNumber = "00000000";
+    _headList -> balance = 0;
+    _headList -> previous = nullptr;
+    _headList -> next = nullptr;
+
+
+    return true;
+}
+
+void addBankAcount(bankAccount *p, string accountNumber, string name, double balance)
+{
+    bankAccount *lastBankAccount = getLastAccount(p);
+    bankAccount newBankAccount;
+    lastBankAccount -> next = &newBankAccount;
+    newBankAccount.accountNumber = accountNumber;
+    newBankAccount.name = name;
+    newBankAccount.balance = balance;
+    newBankAccount.next = nullptr;
+    newBankAccount.previous = lastBankAccount;
+}
+
+void displayListOfCs(const bankAccount*, int)
+{
+
+}
+
+void searchCs(const string);
+void sortCsListBy(const string);
+void deleteAccount(string);
+
+bankAccount* getLastAccount(bankAccount *p)
+{
+    if (p -> next) return p;
+    else{
+        getLastAccount(p -> next);
+    }
+}
 
