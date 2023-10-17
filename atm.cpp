@@ -12,14 +12,15 @@ const short int WITHDRAW = 2;
 const short int DEPOSIT = 3;
 const short int CHECK_BALANCE = 4;
 const short int GET_CARD_BACK = 5;
+const char FILLER = '-';
+const short int COL_WIDTH = 20;
 
 // Struct wasn't neccessary since all the info is balance but I wanted to use pointer ( -> ) :)
 struct bankAccount {
     string accountNumber;
     string name;
     double balance;
-    bankAccount *next;
-    bankAccount *previous; 
+    struct bankAccount *next;
 };
 
 bool runClientMode();
@@ -32,15 +33,18 @@ void deposit(bankAccount*);
 void checkBalance(const bankAccount*);
 
 // ---- [ Menu Options for Banker ] -----
-void addBankAcount(bankAccount*);
-void displayListOfCs(const bankAccount*, int);
+void addBankAcount(bankAccount*, string, string, double);
+void displayListOfCs(bankAccount*, double = 0, string = " ");
 void searchCs(const string);
 void sortCsListBy(const string);
 void deleteAccount(string);
 
 ///  ---- [ HERLPER FUNCTIONS ] ----
-void displayMenu();
-bankAccount* getLastAccount(bankAccount *);
+void displayUserMenu();
+string getAccountNumber();
+void freeMem(bankAccount*);
+void fillListWithDummyData(bankAccount *);
+string toLowerString(const string);
 // Get bank account
 bankAccount* getBankAccount(string);
 // Initialize the balance of the bank account to random (1 - 1001)
@@ -60,7 +64,7 @@ double getValidAmount();
 
 int main()
 {    
-    runClientMode();
+    runBankerMode();
     return 0;
 }
 
@@ -131,7 +135,7 @@ int checkEntry(const int minEntries, const int maxEntries){
     return entry;
 }
 
-void displayMenu(){
+void displayUserMenu(){
     cout << "CHOOSE FROM THE FOLLOWING:\n";
     cout << " 1 --> Fast Cash \t Withdraw <-- 2 \n 3 --> Deposit \t\t Check Balance <-- 4 \n 5 --> Get Card Back \n";
 }
@@ -220,14 +224,13 @@ double getValidAmount()
         try
         {
             cin >> validAmount;
-            if(cin.fail()) throw "Invalid entry";
+            if(cin.fail()) throw "Invalid entry, try again...";
         }
         catch (const char* e)
         {
             cout << e << endl;
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Enter amount (enter 0 to cancel): ";
             continue;
         }
         
@@ -261,7 +264,7 @@ bool runClientMode()
     // Interaction Loop
     while(isInteracting)
     {
-        displayMenu();
+        displayUserMenu();
         entry = checkEntry(1, 5);
         system("clear");
 
@@ -294,45 +297,173 @@ bool runClientMode()
     return true;
 }
 
+void displayBankerMenu(){
+    cout << "CHOOSE FROM THE FOLLOWING:\n";
+    cout << " 1 --> Display all customers \n" <<
+            " 2 --> Display customer w/ balance greater than a value \n" <<
+            " 3 --> Search \n" <<
+            " 4 --> Sort \n" <<
+            " 5 --> Delete an account \n" <<
+            " 6 --> Add a new account \n" <<
+            " 7 --> Exit \n";
+}
+
 bool runBankerMode()
 {
-    bankAccount bankAccounts;
-    bankAccount* _headList = &bankAccounts;
-    _headList -> accountNumber = "00000000";
+    bankAccount *_headList = new bankAccount;
+    _headList -> accountNumber = "0000000";
     _headList -> balance = 0;
-    _headList -> previous = nullptr;
+    _headList -> name = "head";
     _headList -> next = nullptr;
 
-
+    int entry;
+    
+    fillListWithDummyData(_headList);
+    while (true)
+    {
+        displayBankerMenu();
+        entry = checkEntry(1, 7);
+        switch(entry){
+            case 1:
+                
+        }
+        
+    }
+    freeMem(_headList);
     return true;
+}
+
+void addBankAccountInterface(bankAccount *head)
+{
+    string bankAccountNumber;
+    string name;
+    double balance;
+
+    // get Account Number with format check
+    bankAccountNumber = getAccountNumber();
+    
+    // get Name with format check
+    while(true)
+    {
+        cout << "Enter name: ";
+        try
+        {
+            getline(cin, name);
+            if(name.find(' ') != 1)
+            {
+                throw "Invalid Name, use format \"Name Lastname\", try again...";
+            }
+        }
+        catch (const char *e) 
+        {  
+            cerr << e << '\n';
+            continue;  
+        } 
+        break;
+    }
+ 
+    cout << "Enter balance: ";
+    balance = getValidAmount();
+    
+    addBankAcount(head, bankAccountNumber, name, balance);
 }
 
 void addBankAcount(bankAccount *p, string accountNumber, string name, double balance)
 {
-    bankAccount *lastBankAccount = getLastAccount(p);
-    bankAccount newBankAccount;
-    lastBankAccount -> next = &newBankAccount;
-    newBankAccount.accountNumber = accountNumber;
-    newBankAccount.name = name;
-    newBankAccount.balance = balance;
-    newBankAccount.next = nullptr;
-    newBankAccount.previous = lastBankAccount;
+    bankAccount *newBankAccount = new bankAccount;
+    newBankAccount -> accountNumber = accountNumber;
+    newBankAccount -> name = name;
+    newBankAccount -> balance = balance;
+    if (p->next){
+        newBankAccount -> next = p->next;
+        p -> next = newBankAccount;
+    }
+    else {
+        p->next = newBankAccount;
+        newBankAccount -> next = nullptr;
+    }
 }
 
-void displayListOfCs(const bankAccount*, int)
+void displayListOfCs(bankAccount *head, double minBalance, string _q)
 {
+    if (head == nullptr) return;
+    if (head -> accountNumber == "0000000"){
+        cout << setfill('*') << setw(COL_WIDTH *3) << '*' << endl;
+        cout << left << setfill(' ') << setw(COL_WIDTH) << "Account#" << setw(COL_WIDTH) 
+        << "Name" << setw(COL_WIDTH) << right << "Balance"<< endl;
+        cout << setfill(FILLER) << setw(COL_WIDTH *3) << FILLER << endl;
+    }
+    else if(head -> balance > minBalance && toLowerString(head -> name).find(_q) != string::npos){
+        cout << left << setfill(' ') << setw(COL_WIDTH) << head -> accountNumber << setw(COL_WIDTH) 
+        << head -> name << setw(COL_WIDTH) << right << head -> balance << endl;
+        cout << setfill(FILLER) << setw(COL_WIDTH *3) << FILLER << endl;
+    }
 
+    if ( head -> next != nullptr )
+    {
+        displayListOfCs(head->next, minBalance, _q);
+    }
+    else{
+        cout << setfill('*') << setw(COL_WIDTH *3) << '*' << endl;
+    }
 }
 
 void searchCs(const string);
 void sortCsListBy(const string);
-void deleteAccount(string);
-
-bankAccount* getLastAccount(bankAccount *p)
+void deleteAccount(string)
 {
-    if (p -> next) return p;
-    else{
-        getLastAccount(p -> next);
+}
+
+void freeMem(bankAccount *head){
+    if(head->next) freeMem(head -> next);
+    delete(head);
+}
+
+string getAccountNumber(){
+    string bankAccountNumber;
+    while(true)
+    {
+        cout << "Enter account number: ";
+        try
+        {
+            cin >> bankAccountNumber;
+            if(bankAccountNumber.length() != 7 ||
+                bankAccountNumber == "0000000" ||
+                !isdigit(bankAccountNumber[0]) ||
+                !isdigit(bankAccountNumber[1]) ||
+                !isdigit(bankAccountNumber[2]) ||
+                !isdigit(bankAccountNumber[3]) ||
+                !isdigit(bankAccountNumber[4]) ||
+                !isdigit(bankAccountNumber[5]) ||
+                !isdigit(bankAccountNumber[6]) 
+            )
+            {
+                throw "Invalid Account Number, try again . . .";
+            }
+        }
+        catch (const char *e) 
+        {  
+            cerr << e << '\n';
+            continue;  
+        } 
+        return bankAccountNumber;
     }
 }
 
+string toLowerString(const string s)
+{
+    string temp = s;
+    for (auto& x : temp) { 
+        x = tolower(x); 
+    } 
+    return temp;
+}
+
+void fillListWithDummyData(bankAccount *head)
+{
+    addBankAcount(head, "1200457" ,"John Smith", 1245.32);
+    addBankAcount(head, "1257441" ,"Safia Walter", 15.23);
+    addBankAcount(head, "8542212" ,"Kevin Broke", 0.21);
+    addBankAcount(head, "6565741" ,"Todd Rich", 55656.28);
+    addBankAcount(head, "1215478" ,"Laura Happy", 887.66);
+}
