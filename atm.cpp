@@ -1,6 +1,6 @@
 #include <iostream>
-#include<ios>
-#include<limits>
+#include <ios>
+#include <limits>
 #include <cstdlib>
 #include <iomanip>
 #include <string>
@@ -33,17 +33,30 @@ void deposit(bankAccount*);
 void checkBalance(const bankAccount*);
 
 // ---- [ Menu Options for Banker ] -----
-void addBankAcount(bankAccount*, string, string, double);
+void displayUserMenu();
 void displayListOfCs(bankAccount*, double = 0, string = " ");
-void searchCs(const string);
-void sortCsListBy(const string);
-void deleteAccount(string);
+void filterCs(bankAccount *head, bool);
+void addBankAccountInterface(bankAccount *);
+void sortInterface(bankAccount*);
+void deleteAccountInterface(bankAccount *);
 
 ///  ---- [ HERLPER FUNCTIONS ] ----
-void displayUserMenu();
+void addBankAcount(bankAccount*, string, string, double);
+void sortBalance(bankAccount*);
+bool deleteAccount(bankAccount*, string);
+void sortName(bankAccount*);
+// Compare names for sorting
+bool nameComparer(string, string);
+// Gets formatted account number
 string getAccountNumber();
+void sortAccountNumber(bankAccount*);
+// Clear the buffer to avoid unwanted behavior
+void clearBuffer();
+// free all allocated space with 'new'
 void freeMem(bankAccount*);
+// Easier to test, just fills the single linked list with dummy data
 void fillListWithDummyData(bankAccount *);
+// Transforms string to lowercase
 string toLowerString(const string);
 // Get bank account
 bankAccount* getBankAccount(string);
@@ -64,7 +77,12 @@ double getValidAmount();
 
 int main()
 {    
-    runBankerMode();
+    int entry;
+    cout << "1 --> customer\n2 --> banker\n";
+    entry = checkEntry(1, 2);
+    if(entry == 1){
+        runClientMode();
+    }else runBankerMode();
     return 0;
 }
 
@@ -74,8 +92,7 @@ void initializeAccountBalance(bankAccount *p)
     p->balance = rand() % 1000 + 1;
 }
 
-bool checkPin()
-{
+bool checkPin(){
     short int tries = 0;
     string pin;
     while(tries < 3)
@@ -127,6 +144,7 @@ int checkEntry(const int minEntries, const int maxEntries){
         catch(const char *e)
         {
             cerr << e << '\n';
+            clearBuffer();
             continue;
         }
         system("clear");
@@ -229,8 +247,7 @@ double getValidAmount()
         catch (const char* e)
         {
             cout << e << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            clearBuffer();
             continue;
         }
         
@@ -300,7 +317,7 @@ bool runClientMode()
 void displayBankerMenu(){
     cout << "CHOOSE FROM THE FOLLOWING:\n";
     cout << " 1 --> Display all customers \n" <<
-            " 2 --> Display customer w/ balance greater than a value \n" <<
+            " 2 --> Display customer w/ balance greater than a value\n" <<
             " 3 --> Search \n" <<
             " 4 --> Sort \n" <<
             " 5 --> Delete an account \n" <<
@@ -317,20 +334,303 @@ bool runBankerMode()
     _headList -> next = nullptr;
 
     int entry;
-    
+    bool isInteracting = true;
+
     fillListWithDummyData(_headList);
-    while (true)
+    while (isInteracting)
     {
+        system("clear");
         displayBankerMenu();
         entry = checkEntry(1, 7);
         switch(entry){
             case 1:
-                
+                system("clear");
+                displayListOfCs(_headList);
+                cout << "Enter 1 to continue: ";
+                cin.get();
+                clearBuffer();
+                system("clear");
+                break;
+            case 2:
+                system("clear");
+                filterCs(_headList, false);
+                break;
+            case 3:
+                system("clear");
+                filterCs(_headList, true);
+                break;
+            case 4:
+                system("clear");
+                sortInterface(_headList);
+                break;
+            case 5:
+                system("clear");
+                deleteAccountInterface(_headList);
+                cout << "Enter 1 to continue: ";
+                cin.get();
+                clearBuffer();
+                system("clear");
+                break;
+            case 6:
+                system("clear");
+                addBankAccountInterface(_headList);
+                cout << "Customer Added to the database…" << endl;
+                cout << "Enter 1 to continue: ";
+                cin.get();
+                clearBuffer();
+                system("clear");
+                break;
+            case 7:
+                system("clear");
+                isInteracting = false;
+                break;
         }
         
     }
     freeMem(_headList);
+    system("clear");
+    cout<<"GOODBYE...\n";
     return true;
+}
+
+void sortInterface(bankAccount *head){
+    char c_entry;
+    cout << "a --> \tsort by name\nb --> \tsort by account number\nc --> \tsort by balance\nx --> \treturn main menu\n";
+    cout << "Your option here: ";
+    while(true)
+    {
+        try
+        {
+            cin >> c_entry;
+            if (c_entry != 'a' && c_entry != 'b' && c_entry != 'c' && c_entry != 'x') throw "Invalid entry, try again...";
+        }
+        catch (const char* e)
+        {
+            cout << e << endl;
+            clearBuffer();
+            continue;
+        }
+        clearBuffer();
+        break;
+    }
+    switch(c_entry){
+        case 'a':
+            sortName(head);
+            break;
+        case 'b':
+            sortAccountNumber(head);
+            break;
+        case 'c':
+            sortBalance(head);
+            break;
+        case 'x':
+            break;
+        
+    }
+    system("clear");
+}
+
+void sortBalance(bankAccount *head){
+    if(head -> next == nullptr) return;
+    // first value to compare
+    bankAccount *current = head -> next;
+    // this is the node before the first value to compare
+    bankAccount *beforeCurrent = head;
+    // index to traverse linked list
+    bankAccount *index;
+    // this is the node before the second value to compare
+    bankAccount *nodeBeforeSmallest;
+    // trigger for any changes required
+    bool changes;
+    // safe the smallest value
+    double smallest;
+    // while we are in the linked list
+    while(current){
+        // start comparison at the same node of current since we are comparing the one ahead
+        index = current;
+        // Initializing to the current for comparison
+        nodeBeforeSmallest = current;
+        // reset trigger
+        changes = false;
+        // reset smallest value
+        smallest = current -> balance;
+        // while there is another node in the list
+        while(index -> next){
+            // if the following node is smaller than safed node, safe this previos address and set new smaller value
+            if(index -> next -> balance < smallest){
+                changes = true;
+                smallest = index -> next -> balance;
+                nodeBeforeSmallest = index;
+            }
+            // continue traversing linked list
+            index = index -> next;
+        }
+        // if any changes are necessary
+        if (changes)
+        {            
+            // since current is not where is suposed to be the previous node to current points to the right node
+            beforeCurrent -> next = nodeBeforeSmallest -> next;
+            // if current and nodeBeforeSmallest are the same it means they are next to each other
+            // due to the nature of my algorithm some changes need to be made
+            if(current != nodeBeforeSmallest){                    
+                    // switch pointing addresses
+                    index = current -> next;
+                    current -> next = nodeBeforeSmallest -> next -> next;
+                    nodeBeforeSmallest -> next -> next = index;
+                    nodeBeforeSmallest -> next = current;
+            } else {
+                    // if they are adjacent switch addresses a little different
+                    index = current -> next;
+                    current -> next = current -> next -> next; 
+                    index -> next = current;
+            }
+            // adjust so the next node is the actual next in our new linked list
+            current = beforeCurrent -> next;            
+        }
+        // keep going
+        current = current -> next;
+        beforeCurrent = beforeCurrent -> next;
+    }
+}
+
+void sortName(bankAccount *head){
+    if(head -> next == nullptr) return;
+    // first value to compare
+    bankAccount *current = head -> next;
+    // this is the node before the first value to compare
+    bankAccount *beforeCurrent = head;
+    // index to traverse linked list
+    bankAccount *index;
+    // this is the node before the second value to compare
+    bankAccount *nodeBeforeSmallest;
+    // trigger for any changes required
+    bool changes;
+    // safe the smallest value
+    string smallest;
+    // while we are in the linked list
+    while(current){
+        // start comparison at the same node of current since we are comparing the one ahead
+        index = current;
+        // Initializing to the current for comparison
+        nodeBeforeSmallest = current;
+        // reset trigger
+        changes = false;
+        // reset smallest value
+        smallest = current -> name;
+        // while there is another node in the list
+        while(index -> next){
+            // if the following node is smaller than safed node, safe this previos address and set new smaller value
+            if(nameComparer(index -> next -> name , smallest)){
+                changes = true;
+                smallest = index -> next -> name;
+                nodeBeforeSmallest = index;
+            }
+            // continue traversing linked list
+            index = index -> next;
+        }
+        // if any changes are necessary
+        if (changes)
+        {
+            // since current is not where is suposed to be the previous node to current points to the right node
+            beforeCurrent -> next = nodeBeforeSmallest -> next;
+            // if current and nodeBeforeSmallest are the same it means they are next to each other
+            // due to the nature of my algorithm some changes need to be made
+            if(current != nodeBeforeSmallest){
+                    // switch pointing addresses
+                    index = current -> next;
+                    current -> next = nodeBeforeSmallest -> next -> next;
+                    nodeBeforeSmallest -> next -> next = index;
+                    nodeBeforeSmallest -> next = current;
+            } else {
+                    // if they are adjacent switch addresses a little different
+                    index = current -> next;
+                    current -> next = current -> next -> next; 
+                    index -> next = current;
+            }
+            // adjust so the next node is the actual next in our new linked list
+            current = beforeCurrent -> next;
+        }
+        // keep going
+        current = current -> next;
+        beforeCurrent = beforeCurrent -> next;
+    }
+}
+
+bool nameComparer(string name, string comparedTo){
+    if (tolower(name[0]) < tolower(comparedTo[0])) return true;
+    else if(tolower(name[0]) > tolower(comparedTo[0]) || name == comparedTo) return false;
+
+    name = toLowerString(name);
+    comparedTo = toLowerString(comparedTo);
+    for(int i = 0; i < name.length(); i++){
+        if(i == comparedTo.length()) return false;
+        if (name[i] < comparedTo[i]) return true;
+        else if(name[i] > comparedTo[i]) return false;
+    }
+    return false;
+}
+
+void sortAccountNumber(bankAccount *head){
+    if(head -> next == nullptr) return;
+    // first value to compare
+    bankAccount *current = head -> next;
+    // this is the node before the first value to compare
+    bankAccount *beforeCurrent = head;
+    // index to traverse linked list
+    bankAccount *index;
+    // this is the node before the second value to compare
+    bankAccount *nodeBeforeSmallest;
+    // trigger for any changes required
+    bool changes;
+    // safe the smallest value
+    int accountNumber;
+    // while we are in the linked list
+    while(current){
+        // start comparison at the same node of current since we are comparing the one ahead
+        index = current;
+        // Initializing to the current for comparison
+        nodeBeforeSmallest = current;
+        // reset trigger
+        changes = false;
+        // reset smallest value
+        accountNumber = stoi(current -> accountNumber);
+        // while there is another node in the list
+        while(index -> next){
+            // if the following node is smaller than safed node, safe this previos address and set new smaller value
+            if(stoi(index -> next -> accountNumber) < accountNumber){
+                changes = true;
+                accountNumber = stoi(index -> next -> accountNumber);
+                nodeBeforeSmallest = index;
+            }
+            // continue traversing linked list
+            index = index -> next;
+        }
+        // if any changes are necessary
+        if (changes)
+        {
+            // since current is not where is suposed to be the previous node to current points to the right node
+            beforeCurrent -> next = nodeBeforeSmallest -> next;
+            // if current and nodeBeforeSmallest are the same it means they are next to each other
+            // due to the nature of my algorithm some changes need to be made
+            if(current != nodeBeforeSmallest){                                        
+                    // switch pointing addresses
+                    index = current -> next;
+                    current -> next = nodeBeforeSmallest -> next -> next;                    
+                    nodeBeforeSmallest -> next -> next = index;
+                    nodeBeforeSmallest -> next = current;
+            } else {
+                    // if they are adjacent switch addresses a little different
+                    index = current -> next;
+                    current -> next = current -> next -> next; 
+                    index -> next = current;
+            }
+            // adjust so the next node is the actual next in our new linked list
+            current = beforeCurrent -> next;
+        }
+        // keep going
+        current = current -> next;
+        beforeCurrent = beforeCurrent -> next;
+    }
 }
 
 void addBankAccountInterface(bankAccount *head)
@@ -349,7 +649,7 @@ void addBankAccountInterface(bankAccount *head)
         try
         {
             getline(cin, name);
-            if(name.find(' ') != 1)
+            if(name.find(' ') == string::npos)
             {
                 throw "Invalid Name, use format \"Name Lastname\", try again...";
             }
@@ -362,10 +662,33 @@ void addBankAccountInterface(bankAccount *head)
         break;
     }
  
-    cout << "Enter balance: ";
+    cout << "Opening Balance: ";
     balance = getValidAmount();
-    
+    system("clear");
     addBankAcount(head, bankAccountNumber, name, balance);
+}
+
+void filterCs(bankAccount *head, bool search){
+    if (search){
+        string q;
+        cout << "Enter you search: ";
+        clearBuffer();
+        getline(cin, q);
+        q = toLowerString(q);
+        system("clear");
+        displayListOfCs(head, 0, q);
+    }
+    else{
+        double balance;
+        cout << "Enter minimum balance: ";
+        balance = getValidAmount();
+        system("clear");
+        displayListOfCs(head, balance);
+    }
+    cout << "Enter 1 to continue: ";
+    cin.get();
+    clearBuffer();
+    system("clear");
 }
 
 void addBankAcount(bankAccount *p, string accountNumber, string name, double balance)
@@ -394,7 +717,7 @@ void displayListOfCs(bankAccount *head, double minBalance, string _q)
         cout << setfill(FILLER) << setw(COL_WIDTH *3) << FILLER << endl;
     }
     else if(head -> balance > minBalance && toLowerString(head -> name).find(_q) != string::npos){
-        cout << left << setfill(' ') << setw(COL_WIDTH) << head -> accountNumber << setw(COL_WIDTH) 
+        cout<< fixed << setprecision(2) << left << setfill(' ') << setw(COL_WIDTH) << head -> accountNumber << setw(COL_WIDTH) 
         << head -> name << setw(COL_WIDTH) << right << head -> balance << endl;
         cout << setfill(FILLER) << setw(COL_WIDTH *3) << FILLER << endl;
     }
@@ -408,10 +731,27 @@ void displayListOfCs(bankAccount *head, double minBalance, string _q)
     }
 }
 
-void searchCs(const string);
-void sortCsListBy(const string);
-void deleteAccount(string)
-{
+void deleteAccountInterface(bankAccount *head){
+    displayListOfCs(head);
+    string accountNumber;
+    accountNumber = getAccountNumber();
+    if (deleteAccount(head, accountNumber)) cout << "Account successfully deleted." << endl;
+    else cout<< "Couldn't find account with that number.";
+}
+
+bool deleteAccount(bankAccount *head, string accountNumber){
+    bankAccount *index = head;
+    bankAccount *deletionTarget;
+    while(index -> next){
+        if (index -> next -> accountNumber == accountNumber){
+            deletionTarget = index -> next;
+            index -> next = index -> next -> next;
+            delete(deletionTarget);
+            return true;
+        }
+        index = index -> next;
+    }
+    return false;
 }
 
 void freeMem(bankAccount *head){
@@ -446,6 +786,7 @@ string getAccountNumber(){
             cerr << e << '\n';
             continue;  
         } 
+        clearBuffer();
         return bankAccountNumber;
     }
 }
@@ -466,4 +807,9 @@ void fillListWithDummyData(bankAccount *head)
     addBankAcount(head, "8542212" ,"Kevin Broke", 0.21);
     addBankAcount(head, "6565741" ,"Todd Rich", 55656.28);
     addBankAcount(head, "1215478" ,"Laura Happy", 887.66);
+}
+
+void clearBuffer(){
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
