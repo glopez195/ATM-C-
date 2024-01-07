@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <string>
 
+
 using namespace std;
 
 const short int FAST_CASH = 1;
