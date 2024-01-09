@@ -17,7 +17,7 @@ This project serves not only as a functional banking application but also as a t
 To use this application, clone the repository and compile the C++ files. Ensure you have a C++ compiler installed (like g++, clang).
 
 ```bash
-git clone [repo_url]
+git clone https://github.com/glopez195/ATM-C-
 cd [project_directory]
 g++ BankApp.cpp -o DummyBank
 ```
