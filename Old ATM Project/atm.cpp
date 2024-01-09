@@ -16,63 +16,216 @@ const short int GET_CARD_BACK = 5;
 const char FILLER = '-';
 const short int COL_WIDTH = 20;
 
-// Struct wasn't neccessary since all the info is balance but I wanted to use pointer ( -> ) :)
+// Structure representing a bank account in a singly linked list
 struct bankAccount {
-    string accountNumber;
-    string name;
-    double balance;
-    struct bankAccount *next;
+    string accountNumber;   // Unique account number
+    string name;            // Account holder's name
+    double balance;         // Account balance
+    struct bankAccount *next; // Pointer to the next account in the list
 };
 
 bool runClientMode();
 bool runBankerMode();
 
-// ---- [ Menu Options for Customer ] -----
+/**
+ * Allows the client to make a selection of how much cash 
+ * to extract from a set of amount options
+ * @param bankAccount Pointer to the head of the accounts linked list.
+*/
 void fastCash(bankAccount*);
+
+/**
+ * Allows the client to input of how much cash to extract from a set 
+ * of amount options
+ * @param bankAccount Pointer to the head of the accounts linked list.
+*/
 void withdraw(bankAccount*);
+
+/**
+ * Allows the client to input the amount of moeney to be deposited
+ * @param bankAccount Pointer to the head of the accounts linked list.
+*/
 void deposit(bankAccount*);
+
+/**
+ * Prints the current balance of the account selected
+ * @param bankAccount const pointer to the node holding the account info desired
+*/
 void checkBalance(const bankAccount*);
 
-// ---- [ Menu Options for Banker ] -----
-void displayUserMenu();
+/**
+ * Display a list of customer accounts.
+ * 
+ * This function traverses through the linked list of bank accounts and
+ * prints out the account details. It can also filter and display accounts
+ * based on balance and search query.
+ *
+ * @param head Pointer to the head of the linked list of bank accounts.
+ * @param amount The minimum balance to filter accounts by (default is 0).
+ * @param _q Search query to filter accounts by their name (default is empty).
+ */
 void displayListOfCs(bankAccount*, double = 0, string = " ");
+
+/**
+ * Filters and displays a list of customer accounts based on search criteria.
+ *
+ * @param head Pointer to the head of the linked list of bank accounts.
+ * @param search Boolean flag to determine the type of filtering.
+ *               If true, it filters by name; otherwise, it filters by balance.
+ */
 void filterCs(bankAccount *head, bool);
+
+/**
+ * Interface function to add a new bank account.
+ * 
+ * @param head Pointer to the head of the linked list of bank accounts.
+ */
 void addBankAccountInterface(bankAccount *);
+
+/**
+ * Interface function to sort the accounts.
+ * 
+ * @param head Pointer to the head of the linked list of bank accounts.
+ */
 void sortInterface(bankAccount*);
+
+/**
+ * Interface function to remove bank account.
+ * 
+ * @param head Pointer to the head of the linked list of bank accounts.
+ */
 void deleteAccountInterface(bankAccount *);
 
-///  ---- [ HERLPER FUNCTIONS ] ----
+/**
+ * Add a node to the linked list representing a new bank account
+ * 
+ * @param head Head node of the linked list
+ * @param accountNumber String holding the 7 digits representing the unique Account ID
+ * @param name String representing the name of the account holder
+ * @param balance Double to indicate the desired initial balance of the account
+*/
 void addBankAcount(bankAccount*, string, string, double);
+
+/**
+ * Sorts the linked list based on the balance of each
+ * 
+ * @param head Pointer to the head of the linked list
+*/
 void sortBalance(bankAccount*);
+
+/**
+ * Deletes the specified node (account) from the linked list
+ * 
+ * @param head Pointer to the head of the linked list
+ * @param accountNumber String holding the 7 digits representing the unique Account ID
+ * @return True if account was found and deleted, false otherwise
+*/
 bool deleteAccount(bankAccount*, string);
+
+/**
+ * Sorts the linked list by Client name
+ * 
+ * @param head Pointer to the head of the linked list
+*/
 void sortName(bankAccount*);
-// Compare names for sorting
+
+/**
+ * Compares two strings (names) to determine their lexicographical order.
+ * 
+ * This function is designed to compare two names in a case-insensitive manner.
+ * It first compares the first characters of both names. If the first characters
+ * are different, it determines the order based on these characters alone.
+ * If the first characters are the same, it converts both strings to lowercase
+ * and performs a character-by-character comparison to determine the order.
+ * 
+ * @param name First string to be compared.
+ * @param comparedTo Second string to be compared.
+ * @return Returns true if the first string should come before the second string
+ *         in lexicographical order, false otherwise.
+ */
 bool nameComparer(string, string);
-// Gets formatted account number
+
+/**
+ * Function prompts for a account number and veryfies that it holds the appropiate
+ * format. It has an infinite loop and the only way to succeed is entering a 7 digit string.
+ * 
+ * @return A properly formatted string representing the account number  
+*/
 string getAccountNumber();
+
+/**
+ * Sorts the linked list by account number
+ * 
+ * @param head Pointer to the head of the linked list
+*/
 void sortAccountNumber(bankAccount*);
-// Clear the buffer to avoid unwanted behavior
+
+/**
+ * Clears the buffer to avoid unwanted behavior
+ */
 void clearBuffer();
-// free all allocated space with 'new'
+
+/**
+ * Called at the end of the program to free all the allocated memory
+ * 
+ * @param head Pointer to the head of the linked list
+*/
 void freeMem(bankAccount*);
-// Easier to test, just fills the single linked list with dummy data
+
+/**
+ * Easier to test, just fills the single linked list with dummy data
+ * 
+ * @param head Pointer to the head of the linked list
+*/
 void fillListWithDummyData(bankAccount *);
-// Transforms string to lowercase
+
+/**
+ * Transforms string to lowercase
+ * 
+ * @param s The string to be transformed to lowercase
+ * @return A new string containing all the same letters as the s but in lower case
+*/
 string toLowerString(const string);
-// Get bank account
-bankAccount* getBankAccount(string);
-// Initialize the balance of the bank account to random (1 - 1001)
+
+/**
+ * Initialize the balance of the bank account to random (1 - 1001)
+ * 
+ * @param head Pointer to the node of the linked list
+*/
 void initializeAccountBalance(bankAccount*);
-// Check if pin is valid
+
+/**
+ * It handles the process of prompting user for a 4 digit pin. The user has
+ * three tries before the function fails and exits.
+ * 
+ * @return True if the user succesfully entered a 4 digit pin before the fourth
+ * attempt, False otherwise.
+*/
 bool checkPin();
-// Check if receipt is wanted
+
+/**
+ * Promps user if receipt will be wanted and stores the information in the boolean
+ * that the isReceiptWanted points to.
+ * 
+ * @param isReceiptWanted Bool Pointer pointing to the variable that will hold the 
+ * value of the user's desicion.
+*/
 void checkIfReceiptWanted(bool*);
-// Get a valid entry for the given options
+
+/**
+     * Reads an integer number from standard input and ensures that it is between the
+     * expected number of choices in the menu
+     * 
+     * @param minEntries Integer representing the lowest choice in the menu
+     * @param maxEntries Integer representing the highest choice in the menu
+     * @return The read integer.
+     */
 int checkEntry(const int, const int);
-/* 
-   Checking the validity of the entry should be done in graphical interface (keypad) 
-   assuming the program is running on the client side and manual input is also acceptable (keyboard)
-   the validation of the entry will be checked in case of not proper input 
+
+/**
+ * Ensures data validation when prompting user for amount.
+ * 
+ * @return Validated double.
 */
 double getValidAmount();
 
@@ -671,25 +824,27 @@ void addBankAccountInterface(bankAccount *head)
 
 void filterCs(bankAccount *head, bool search){
     if (search){
+        // For name-based search
         string q;
         cout << "Enter you search: ";
         clearBuffer();
         getline(cin, q);
-        q = toLowerString(q);
+        q = toLowerString(q); // Converts the query to lowercase for case-insensitive search
         system("clear");
-        displayListOfCs(head, 0, q);
+        displayListOfCs(head, 0, q); // Display accounts that match the search query
     }
     else{
+        // For balance-based filtering
         double balance;
         cout << "Enter minimum balance: ";
-        balance = getValidAmount();
+        balance = getValidAmount(); // Get the minimum balance value from the user
         system("clear");
-        displayListOfCs(head, balance);
+        displayListOfCs(head, balance); // Display accounts with a balance greater than or equal to the specified amount
     }
     cout << "Enter 1 to continue: ";
-    cin.get();
-    clearBuffer();
-    system("clear");
+    cin.get();  // Wait for user input before proceeding
+    clearBuffer();  // Clear the input buffer
+    system("clear");  // Clear the console
 }
 
 void addBankAcount(bankAccount *p, string accountNumber, string name, double balance)
@@ -710,24 +865,28 @@ void addBankAcount(bankAccount *p, string accountNumber, string name, double bal
 
 void displayListOfCs(bankAccount *head, double minBalance, string _q)
 {
+    // Check if the list is empty
     if (head == nullptr) return;
-    if (head -> accountNumber == "0000000"){
+    // Display header for the list if at the head node
+     if (head -> accountNumber == "0000000"){
         cout << setfill('*') << setw(COL_WIDTH *3) << '*' << endl;
         cout << left << setfill(' ') << setw(COL_WIDTH) << "Account#" << setw(COL_WIDTH) 
         << "Name" << setw(COL_WIDTH) << right << "Balance"<< endl;
         cout << setfill(FILLER) << setw(COL_WIDTH *3) << FILLER << endl;
     }
+    // Display account information if it meets the filter criteria
     else if(head -> balance > minBalance && toLowerString(head -> name).find(_q) != string::npos){
         cout<< fixed << setprecision(2) << left << setfill(' ') << setw(COL_WIDTH) << head -> accountNumber << setw(COL_WIDTH) 
         << head -> name << setw(COL_WIDTH) << right << head -> balance << endl;
         cout << setfill(FILLER) << setw(COL_WIDTH *3) << FILLER << endl;
     }
-
+    // Recursively call the function for the next node in the list
     if ( head -> next != nullptr )
     {
         displayListOfCs(head->next, minBalance, _q);
     }
     else{
+        // Print footer at the end of the list
         cout << setfill('*') << setw(COL_WIDTH *3) << '*' << endl;
     }
 }
